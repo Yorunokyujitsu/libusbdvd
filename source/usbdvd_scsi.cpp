@@ -28,24 +28,6 @@ typedef enum {
     ScsiCommandStatus_PhaseError = 0x02
 } ScsiCommandStatus;
 
-
-
-
-#ifdef __linux__
-enum usb_endpoint_direction {
-    USB_ENDPOINT_IN = 0x80,
-    USB_ENDPOINT_OUT = 0x00
-};
-#endif
-
-#ifdef __linux__
-void usb_randomGet(uint32_t *randomnum){
-    *randomnum = ((unsigned int)rand() << 24) ^
-                           ((unsigned int)rand() << 12) ^
-                           ((unsigned int)rand());
-}
-#endif
-
 static void CreateCommandBlockWrapper(CBW *cbw, uint32_t data_size, bool data_in, uint8_t lun, uint8_t cb_size)
 {
     
@@ -139,13 +121,15 @@ int CUSBSCSI::UsbDvdUnitReady(uint8_t lun){
 	uint32_t transferred = 0;
     
     int r = usb_ctx->usb_bulk_transfer(false,mycbw,sizeof(CBW),&transferred,5000);
-	
+	/*
 	uint8_t *testcbw = (uint8_t*)mycbw;
+	
 	usbdvd_log("CBW : ");
 	for(int i=0;i<(int)sizeof(CBW);i++){
 		usbdvd_log("%02hhx ",testcbw[i]);
 	}
 	usbdvd_log("\r\n");
+	*/
 	if (r < 0) {
 		return r;
 	}
@@ -156,23 +140,25 @@ int CUSBSCSI::UsbDvdUnitReady(uint8_t lun){
         
         r = usb_ctx->usb_bulk_transfer(true,(uint8_t*)&csw,sizeof(CSW),&cswtrans,5000);
         if(cswtrans==sizeof(CSW)){
-            uint8_t *testcsw = (uint8_t *)&csw;
+            //uint8_t *testcsw = (uint8_t *)&csw;
+			/*
 			usbdvd_log("CSW: ");
             for(int i=0;i<(int)sizeof(CSW);i++){
                 usbdvd_log("%02hhx ",testcsw[i]);
             }
             usbdvd_log("\r\n");
-            if (r < 0) {
+            */
+			if (r < 0) {
                 return r;
             }
 
             
             if (csw.dCSWSignature != CSW_SIGNATURE) {
-                usbdvd_log("SIG ERROR\r\n");
+                //usbdvd_log("SIG ERROR\r\n");
                 return -1;
             }
             if (csw.dCSWTag != mycbw->dCBWTag) {
-                usbdvd_log("TAG ERROR\r\n");
+                //usbdvd_log("TAG ERROR\r\n");
                 return -1;
             }
             if (csw.bCSWStatus != 0) {
@@ -180,7 +166,7 @@ int CUSBSCSI::UsbDvdUnitReady(uint8_t lun){
 				ScsiRequestSenseDataFixedFormat testsense = {0};
 				
 				UsbDvdSense(0,sizeof(ScsiRequestSenseDataFixedFormat),&testsense);
-				usbdvd_log("STATUS: %02hhx\r\n",testsense.sense_key);
+				//usbdvd_log("STATUS: %02hhx\r\n",testsense.sense_key);
 				switch(testsense.sense_key)
 				{
 					case ScsiSenseKey_NoSense:
@@ -191,15 +177,15 @@ int CUSBSCSI::UsbDvdUnitReady(uint8_t lun){
 						break;
 					case ScsiSenseKey_NotReady:
 						if (testsense.additional_sense_code == SCSI_ASC_MEDIUM_NOT_PRESENT){
-							usbdvd_log("No Medium on drive\r\n");
+							//usbdvd_log("No Medium on drive\r\n");
 							return -2;
 							break;
 						}
 					default:
-						usbdvd_log("Unrecoverable error");
+						//usbdvd_log("Unrecoverable error");
 						break;
 				}
-                usbdvd_log("STATUS ERROR\r\n");
+                //usbdvd_log("STATUS ERROR\r\n");
                 return -1;
             }
         }

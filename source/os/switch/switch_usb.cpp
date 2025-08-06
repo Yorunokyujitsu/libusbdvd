@@ -41,9 +41,9 @@ enum usb_request_type {
 
 CSWITCH_USB::~CSWITCH_USB(){
 	
-	if (serviceIsActive(&(endpoint_out.s))) usbHsEpClose(&endpoint_out);
-    if (serviceIsActive(&(endpoint_in.s))) usbHsEpClose(&endpoint_in);
-    if (usbHsIfIsActive(&inf_session)) usbHsIfClose(&inf_session);
+	usbHsEpClose(&endpoint_out);
+    usbHsEpClose(&endpoint_in);
+    usbHsIfClose(&inf_session);
 
 	
 	usbHsDestroyInterfaceAvailableEvent(&dvd_usbInterfaceAvailableEvent, 0);
@@ -109,24 +109,24 @@ CSWITCH_USB::CSWITCH_USB(){
 				u32 transferredSize=0;
 				memset(xfer_buf,0,USB_TRANS_BUF_SIZE);
 				rc = usbHsIfCtrlXfer(usb_if_session, USB_ENDPOINT_IN, USB_REQUEST_GET_DESCRIPTOR, (USB_DT_CONFIG<<8) | 0, 0, 0x40, xfer_buf, &transferredSize);
-				usbdvd_log("usbHsIfCtrlXfer(interface index = %d) returned: 0x%x, transferredSize=0x%x\n", i, rc, transferredSize);
+				//usbdvd_log("usbHsIfCtrlXfer(interface index = %d) returned: 0x%x, transferredSize=0x%x\n", i, rc, transferredSize);
 				for(epi=0; epi<15; epi++) {
 					ep_desc = &usb_if_session->inf.inf.output_endpoint_descs[epi];
 					if (ep_desc->bLength != 0 && !(ep_desc->bEndpointAddress & USB_ENDPOINT_IN)) {
-						usbdvd_log("Using OUTPUT endpoint %d.\n", epi);
+						//usbdvd_log("Using OUTPUT endpoint %d.\n", epi);
 
 						rc = usbHsIfOpenUsbEp(usb_if_session, &endpoint_out, 1, ep_desc->wMaxPacketSize, ep_desc);
-						usbdvd_log("usbHsIfOpenUsbEp returned: 0x%x\n", rc);
+						//usbdvd_log("usbHsIfOpenUsbEp returned: 0x%x\n", rc);
 						e_out = true;
 						if (R_FAILED(rc)) break;
 					}
 					ep_desc = &usb_if_session->inf.inf.input_endpoint_descs[epi];
 					if (ep_desc->bLength != 0 && (ep_desc->bEndpointAddress & USB_ENDPOINT_IN)) {
-						usbdvd_log("Using INPUT endpoint %d.\n", epi);
+						//usbdvd_log("Using INPUT endpoint %d.\n", epi);
 
 						e_in = true;
 						rc = usbHsIfOpenUsbEp(usb_if_session, &endpoint_in, 1, ep_desc->wMaxPacketSize, ep_desc);
-						usbdvd_log("usbHsIfOpenUsbEp returned: 0x%x\n", rc);
+						//usbdvd_log("usbHsIfOpenUsbEp returned: 0x%x\n", rc);
 						if (R_FAILED(rc)) break;
 					}
 
@@ -135,20 +135,22 @@ CSWITCH_USB::CSWITCH_USB(){
 			}
 		}
 		
-		if(!e_in)usbdvd_log("NO INPUT ENDPOINT\r\n");
-		if(!e_out)usbdvd_log("NO OUTPUT ENDPOINT\r\n");
+		//if(!e_in)usbdvd_log("NO INPUT ENDPOINT\r\n");
+		//if(!e_out)usbdvd_log("NO OUTPUT ENDPOINT\r\n");
 		
 		
-		usb_device_reset();
-		usb_clear_halt(usb_if_session, &endpoint_out);
-		usb_clear_halt(usb_if_session, &endpoint_in);
+		
 		
 		if (e_in && e_out){
-			usbdvd_log("USB INI OK, ENDPOINT OK\r\n");
+			//usb_device_reset();
+			usb_clear_halt(usb_if_session, &endpoint_out);
+			usb_clear_halt(usb_if_session, &endpoint_in);
+			//usbdvd_log("USB INI OK, ENDPOINT OK\r\n");
 			device_found = true;
 			
 			return;
 		}
+		
 		
 		
 	}

@@ -33,10 +33,13 @@ public:
 	
 	std::string disctype;
 	
+	bool drive_found = false;
 	bool acd_init_ok = false;
 	bool datacd_init_ok = false;
 	bool fileimage = false;
 	std::string mountpoint = "";
+	std::string disc_fstype = "";
+	std::string disc_type;
 	int drive_status = 0;
 	
 private:

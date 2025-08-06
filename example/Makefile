@@ -70,7 +70,7 @@ LDFLAGS		=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $
 
 LIBS		:=	
 
-LIBS		+=	../../lib/libusbdvdd.a -lnx
+LIBS		+=	../../lib/libusbdvd.a -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

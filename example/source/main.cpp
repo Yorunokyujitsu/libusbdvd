@@ -79,14 +79,7 @@ int main(int argc, const char* const* argv) {
 	}else{
 		printf("NO USB DVD FOUND\r\n");
 	}
-	/*
-	std::string aaatest = testusbdvd->mountpoint + std::string("/")+"2003 - Splinter/02. The Noose.mp3";
 	
-	FILE *aaa = fopen(aaatest.c_str(),"rb");
-	char buff[0x1000];
-	fread(buff,sizeof(char),0x100,aaa);
-	fclose(aaa);
-*/
 	while(appletMainLoop()){
 		 padUpdate(&pad);
 
