@@ -44,15 +44,15 @@ VERSION_MAJOR	:=	0
 VERSION_MINOR	:=	0
 VERSION_MICRO	:=	1
 
-APP_TITLE		:=	libusbdvd-example
+APP_TITLE		:=	libusbdvd-example-c
 APP_AUTHOR		:=	proconsule
 APP_VERSION		:=	${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
 
 TARGET			:=	${APP_TITLE}
 BUILD			:=	build
-SOURCES			:=	source usbdvd/ usbdvd/os/switch/
+SOURCES			:=	source
 DATA			:=	data
-INCLUDES		:=	include usbdvd/ usbdvd/os/switch/
+INCLUDES		:=	../../include
 #ROMFS			:=	romfs
 
 #---------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ LDFLAGS		=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $
 
 LIBS		:=	
 
-LIBS		+=	../../lib/libusbdvd.a -lnx
+LIBS		+=	../../../lib/libusbdvd.a -lstdc++ -lnx
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

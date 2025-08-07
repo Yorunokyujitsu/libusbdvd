@@ -1,6 +1,41 @@
 #ifndef USBDVD_H
 #define USBDVD_H
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef struct{
+	char disc_fstype[0x80];
+	char mountpoint[0x05];
+}usbdvd_fs_struct;
+
+typedef struct{
+	char vendor_id[0x8+1];
+    char product_id[0x10+1];
+    char product_revision[0x4+1];
+    char serial_number[0x8+1];
+	char disc_type[0x20];
+	usbdvd_fs_struct fs;
+}usbdvd_drive_struct;
+
+
+typedef struct usbdvd_obj usbdvd_obj;
+
+usbdvd_obj* usbdvd_create();
+void usbdvd_destroy(usbdvd_obj* obj);
+usbdvd_drive_struct * usbdvd_get_drivectx(usbdvd_obj* obj);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+
+#ifdef __cplusplus
+
 #include <string>
 #include <switch.h>
 
@@ -10,6 +45,9 @@ class CAUDIOCD_PSEUDOFS;
 class CUSBSCSI;
 class CUSBDVD_ISO9660FS;
 class SWITCH_ISO9660FS;
+
+
+
 
 class CUSBDVD{
 public:
@@ -37,10 +75,12 @@ public:
 	bool acd_init_ok = false;
 	bool datacd_init_ok = false;
 	bool fileimage = false;
-	std::string mountpoint = "";
-	std::string disc_fstype = "";
-	std::string disc_type;
+	//std::string mountpoint = "";
+	//std::string disc_fstype = "";
+	//std::string disc_type;
 	int drive_status = 0;
+	
+	usbdvd_drive_struct usbdvd_drive_ctx;
 	
 private:
 
@@ -57,5 +97,16 @@ private:
 	
 };
 
-#endif /* USBDVD_H */
+#endif
+
+
+
+
+
+
+
+
+
+
+#endif
 

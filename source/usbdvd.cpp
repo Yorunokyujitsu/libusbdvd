@@ -43,7 +43,6 @@ CUSBDVD::CUSBDVD(std::string _isofilepath){
 	
 	ISO9660FS = new CUSBDVD_ISO9660FS(isofilepath);
 	SWITCH_ISO9660DEVOPTAB = new SWITCH_ISO9660FS(ISO9660FS,"iso0","iso0:");
-	this->mountpoint = "iso0:";
 	if(pseudofs_init && cdfs_init && usb_init)datacd_init_ok = true;
 	
 	
@@ -67,27 +66,15 @@ CUSBDVD::CUSBDVD(){
 			int ret = USB_SCSI->UsbDvdSendInquiry(0,sizeof(ScsiInquiryStandardData),(uint8_t *)&test);
 			if(ret!=0)return;
 			
-			char chr_vendor_id[0x8+1];
-			char chr_product_id[0x10+1];
-			char chr_product_revision[0x4+1];
-			char chr_serial_number[0x8+1];
+			memset(usbdvd_drive_ctx.vendor_id,0,sizeof(usbdvd_drive_ctx.vendor_id));
+			memset(usbdvd_drive_ctx.product_id,0,sizeof(usbdvd_drive_ctx.product_id));
+			memset(usbdvd_drive_ctx.product_revision,0,sizeof(usbdvd_drive_ctx.product_revision));
+			memset(usbdvd_drive_ctx.serial_number,0,sizeof(usbdvd_drive_ctx.serial_number));
 			
-			memset(chr_vendor_id,0,sizeof(chr_vendor_id));
-			memset(chr_product_id,0,sizeof(chr_product_id));
-			memset(chr_product_revision,0,sizeof(chr_product_revision));
-			memset(chr_serial_number,0,sizeof(chr_serial_number));
-			
-			memcpy(chr_vendor_id,test.vendor_id,sizeof(test.vendor_id));
-			memcpy(chr_product_id,test.product_id,sizeof(test.product_id));
-			memcpy(chr_product_revision,test.product_revision,sizeof(test.product_revision));
-			memcpy(chr_serial_number,test.serial_number,sizeof(test.serial_number));
-			
-			
-			
-			product_id = chr_product_id;
-			product_revision = chr_product_revision;
-			serial_number = chr_serial_number;
-			vendor_id = chr_vendor_id;
+			memcpy(usbdvd_drive_ctx.vendor_id,test.vendor_id,sizeof(test.vendor_id));
+			memcpy(usbdvd_drive_ctx.product_id,test.product_id,sizeof(test.product_id));
+			memcpy(usbdvd_drive_ctx.product_revision,test.product_revision,sizeof(test.product_revision));
+			memcpy(usbdvd_drive_ctx.serial_number,test.serial_number,sizeof(test.serial_number));
 			
 			
 			
@@ -99,7 +86,7 @@ CUSBDVD::CUSBDVD(){
 			if(drive_status!=0)return;
 			
 			
-			
+			std::string disctype  = "Unknown";
 			uint8_t testconf[0x08];
 			ret = USB_SCSI->UsbDvdGetConfig(0,testconf);
 			if(ret == 0){
@@ -126,7 +113,7 @@ CUSBDVD::CUSBDVD(){
 			
 			}
 			
-			disc_type = disctype;
+			memcpy(usbdvd_drive_ctx.disc_type,disctype.c_str(),disctype.length());
 			
 			USB_SCSI->UsbDvdPreventMediumRemoval(0,1);
 			
@@ -166,9 +153,9 @@ CUSBDVD::CUSBDVD(){
 				
 				SWITCH_CDAUDIODEVOPTAB = new SWITCH_AUDIOCDFS(CDAUDIOFS,"acd0","acd0:");
 				pseudofs_init = true;
-				this->mountpoint = "acd0:";
-				disc_fstype = "CD Audio";
-
+				memcpy(usbdvd_drive_ctx.fs.mountpoint,"acd0:",strlen("acd0:"));
+				memcpy(usbdvd_drive_ctx.fs.disc_fstype,"CD Audio",strlen("CD Audio"));
+			
 				}
 				
 				if(pseudofs_init && cdfs_init && usb_init)acd_init_ok = true;
@@ -181,9 +168,20 @@ CUSBDVD::CUSBDVD(){
 				
 				SWITCH_ISO9660DEVOPTAB = new SWITCH_ISO9660FS(ISO9660FS,"iso0","iso0:");
 				pseudofs_init = true;
-				this->mountpoint = "iso0:";
+				memcpy(usbdvd_drive_ctx.fs.mountpoint,"iso0:",strlen("iso0:"));
+			
 				if(pseudofs_init && cdfs_init && usb_init)datacd_init_ok = true;
-				disc_fstype = "ISO9660";
+				if(ISO9660FS->isjoliet){
+					memcpy(usbdvd_drive_ctx.fs.disc_fstype,"ISO9660 + Joliet",strlen("ISO9660 + Joliet"));	
+			
+				} else if(ISO9660FS->isrockridge){
+					memcpy(usbdvd_drive_ctx.fs.disc_fstype,"ISO9660 + RockRidge",strlen("ISO9660 + RockRidge"));
+			
+				}else{
+					memcpy(usbdvd_drive_ctx.fs.disc_fstype,"ISO9660",strlen("ISO9660"));
+			
+				}
+				
 			}
 		}
 	
@@ -212,4 +210,45 @@ int UsbDVDGuessFsType(CDDVD_TOC * mytoc){
 	
 	return -1;
 }
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static CUSBDVD* cast_to_cpp(usbdvd_obj* obj) {
+    return reinterpret_cast<CUSBDVD*>(obj);
+}
+
+/*
+static const CUSBDVD* cast_to_cpp_const(const usbdvd_obj* obj) {
+    return reinterpret_cast<const CUSBDVD*>(obj);
+}
+*/
+
+static usbdvd_obj* cast_to_c(CUSBDVD* obj) {
+    return reinterpret_cast<usbdvd_obj*>(obj);
+}
+
+
+usbdvd_obj* usbdvd_create() {
+	CUSBDVD* obj = new CUSBDVD();
+	return cast_to_c(obj);
+}
+
+void usbdvd_destroy(usbdvd_obj* obj) {
+    if (obj) {
+        delete cast_to_cpp(obj);
+    }
+}
+
+usbdvd_drive_struct * usbdvd_get_drivectx(usbdvd_obj* obj){
+	if (!obj)return NULL;
+	return &cast_to_cpp(obj)->usbdvd_drive_ctx; 
+}
+
+
+#ifdef __cplusplus
+}
+#endif
 

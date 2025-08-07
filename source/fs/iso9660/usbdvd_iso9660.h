@@ -26,6 +26,8 @@ public:
 	CUSBDVD_ISO9660FS(CUSBSCSI * _usb_scsi_ctx,uint32_t _startlba,uint32_t _endlba);
 	~CUSBDVD_ISO9660FS();
     
+	void UDFParse();
+	
     int iso9660_filesectorread(uint32_t sector,uint8_t *buffer);
     void list_dir_iso9660(uint32_t sector, const std::string& path);
     void list_dir_joliet(uint32_t sector, const std::string& path);
@@ -43,7 +45,8 @@ public:
     uint32_t VolumeSectors;
     uint32_t VolumeSpace;
 	bool isjoliet = false;
-    int jolietver = 0;
+	bool isrockridge = false;
+	int jolietver = 0;
     
 private:
     std::string filename;

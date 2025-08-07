@@ -233,53 +233,73 @@ CUSBDVD_ISO9660FS::CUSBDVD_ISO9660FS(CUSBSCSI * _usb_scsi_ctx,uint32_t _startlba
 	primary_vd_struct primary_vd = {0};
     memcpy(&primary_vd,iso9660_rootsector,sizeof(primary_vd));
     
+//	if(primary_vd.stdid[0] == 'B' && primary_vd.stdid[1] == 'E' && primary_vd.stdid[2] == 'A' && primary_vd.stdid[3] == '0' && primary_vd.stdid[4] == '1'){
+		
 	
 	
+	
+	
+//	}else{
     
-    SystemIdentifier = (const char *)primary_vd.sys_id;
-    VolumeIdentifier = (const char *)primary_vd.vol_id;
-    VolumeSpace = byte2u32_le(primary_vd.vd_space_le)*DATA_SECOTR_SIZE;
-    VolumeSectors =  byte2u32_le(primary_vd.vd_space_le);
-    rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&primary_vd.rd_record);
-    uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
-	
-	uint8_t iso9660_rootjolietsector[DATA_SECOTR_SIZE];
-   
-    ReadSector(17,iso9660_rootjolietsector);
-    primary_vd_struct testjoilet = {0};
-    memcpy(&testjoilet,iso9660_rootjolietsector,sizeof(testjoilet));
-	
-    if(testjoilet.vdtype == 0x02){
-        isjoliet = true;
-        if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x40){
-            jolietver = 1;
-            
-        }
-        if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x43){
-            jolietver = 2;
-            
-        }
-        if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x45){
-			jolietver = 3;
-        }
-        
-    }
+		SystemIdentifier = (const char *)primary_vd.sys_id;
+		VolumeIdentifier = (const char *)primary_vd.vol_id;
+		VolumeSpace = byte2u32_le(primary_vd.vd_space_le)*DATA_SECOTR_SIZE;
+		VolumeSectors =  byte2u32_le(primary_vd.vd_space_le);
+		rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&primary_vd.rd_record);
+		uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
+		
+		uint8_t iso9660_rootjolietsector[DATA_SECOTR_SIZE];
+	   
+		ReadSector(17,iso9660_rootjolietsector);
+		primary_vd_struct testjoilet = {0};
+		memcpy(&testjoilet,iso9660_rootjolietsector,sizeof(testjoilet));
+		
+		if(testjoilet.vdtype == 0x02){
+			isjoliet = true;
+			if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x40){
+				jolietver = 1;
+				
+			}
+			if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x43){
+				jolietver = 2;
+				
+			}
+			if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x45){
+				jolietver = 3;
+			}
+			
+		}
 
-   if(isjoliet){
-        rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&testjoilet.rd_record);
-        uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
-        
-       list_dir_joliet(root_sector,"/");
-   }else{
-        list_dir_iso9660(root_sector,"/");
-    }
+	   if(isjoliet){
+			rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&testjoilet.rd_record);
+			uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
+			
+		   list_dir_joliet(root_sector,"/");
+	   }else{
+			list_dir_iso9660(root_sector,"/");
+		}
+		
+		for(int i=0;i<(int)iso9660_dirlist.size();i++){
+			usbdvd_log("%s\r\n",iso9660_dirlist[i].name.c_str());
+		}
 	
-	for(int i=0;i<(int)iso9660_dirlist.size();i++){
-		usbdvd_log("%s\r\n",iso9660_dirlist[i].name.c_str());
-	}
+//	}
+}
+
+
+void CUSBDVD_ISO9660FS::UDFParse(){
+	uint8_t iso9660_udfversion[DATA_SECOTR_SIZE];
+	   
+	ReadSector(17,iso9660_udfversion);
+	primary_vd_struct udfversion = {0};
+	memcpy(&udfversion,iso9660_udfversion,sizeof(udfversion));
+	
+	
 	
 	
 }
+
+
 
 CUSBDVD_ISO9660FS::CUSBDVD_ISO9660FS(std::string _filename){
     
@@ -422,6 +442,7 @@ void CUSBDVD_ISO9660FS::list_dir_iso9660(uint32_t sector, const std::string& pat
                 rockridge_header_struct test_rr;
                 memcpy(&test_rr,rr_ptr,sizeof(test_rr));
                 if(test_rr.sp_id[0] == 'R' && test_rr.sp_id[1] == 'R'){
+					isrockridge = true;
                     rockridge_rr_flags_struct rockridge_rr_flags;
                     memcpy(&rockridge_rr_flags,&rr_ptr[5],1);
                     if(rockridge_rr_flags.nm){
