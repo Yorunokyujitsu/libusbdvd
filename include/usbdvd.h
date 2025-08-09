@@ -24,6 +24,7 @@ typedef struct{
 	bool mounted;
 	char disc_fstype[0x80];
 	char mountpoint[0x05];
+	char volid[0xff];
 }usbdvd_fs_struct;
 
 typedef struct{
@@ -40,7 +41,8 @@ typedef struct{
 
 typedef struct usbdvd_obj usbdvd_obj;
 
-usbdvd_obj* usbdvd_create();
+usbdvd_obj* usbdvd_init();
+usbdvd_obj* usbdvd_initimage(const char * _path);
 void usbdvd_destroy(usbdvd_obj* obj);
 usbdvd_drive_struct * usbdvd_get_drivectx(usbdvd_obj* obj);
 const char* usbdvd_version(void);

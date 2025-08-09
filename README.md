@@ -1,5 +1,4 @@
 # libusbdvd
-A library supporting usb-dvd drives on switch HOS
 
 libusbdvd is a c++ library for HorizonOS supporting CD/DVD Drives.
 
@@ -18,7 +17,7 @@ TODO List:
 C Example
 
     /* Create the lib obj ref */
-    usbdvd_obj* dvdtest = usbdvd_create();
+    usbdvd_obj* dvdtest = usbdvd_init();
     /* ref to the drive ctx with info */
     usbdvd_drive_struct *drivectx = usbdvd_get_drivectx(dvdtest);
     /* destroy and cleanup */

@@ -21,7 +21,8 @@ int main(int argc, const char* const* argv) {
 	PadState pad;
     padInitializeDefault(&pad);
 	
-	usbdvd_obj* test = usbdvd_create();
+	//usbdvd_obj* test = usbdvd_init();
+	usbdvd_obj* test = usbdvd_initimage("/switch/NXMilk/img_rr.iso");
 	usbdvd_drive_struct *drivectx = usbdvd_get_drivectx(test);
 	
 	printf("USBDVD Library Version: %s\r\n",usbdvd_version());
@@ -37,6 +38,7 @@ int main(int argc, const char* const* argv) {
 		printf("PATH: %s\r\n",path);
 	
 	if(drivectx->fs.mounted){
+		printf("Volume ID: %s\r\n",drivectx->fs.volid);
 		printf("Disc FS: %s\r\n",drivectx->fs.disc_fstype);
 		struct dirent *ent;
 		char path[128];
