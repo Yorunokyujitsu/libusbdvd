@@ -54,7 +54,7 @@ CUSBDVD::CUSBDVD(std::string _isofilepath){
 	
 
 	strcpy(usbdvd_drive_ctx.vendor_id,"USBDVD");
-	strcpy(usbdvd_drive_ctx.product_id,"IMAGE MOUNTER");
+	strncpy(usbdvd_drive_ctx.product_id,LIBUSBDVD_VERSION_STRING,sizeof(usbdvd_drive_ctx.product_id)-1);
 	strcpy(usbdvd_drive_ctx.product_revision,"1");
 	strcpy(usbdvd_drive_ctx.serial_number,"001");
 	strcpy(usbdvd_drive_ctx.disc_type,"DISC IMAGE");

@@ -21,8 +21,8 @@ int main(int argc, const char* const* argv) {
 	PadState pad;
     padInitializeDefault(&pad);
 	
-	//usbdvd_obj* test = usbdvd_init();
-	usbdvd_obj* test = usbdvd_initimage("/switch/NXMilk/img_rr.iso");
+	usbdvd_obj* test = usbdvd_init();
+	// usbdvd_obj* test = usbdvd_initimage("/pathtoiso.iso");  //FILE MOUNT
 	usbdvd_drive_struct *drivectx = usbdvd_get_drivectx(test);
 	
 	printf("USBDVD Library Version: %s\r\n",usbdvd_version());

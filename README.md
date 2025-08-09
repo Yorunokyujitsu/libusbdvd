@@ -15,6 +15,8 @@ TODO List:
 - DECSS Algo
 - Blu-ray support 
 
+There is a C++ and C interface (the c program must be linked against -lstdc++)
+
 C Example
 
     /* Create the lib obj ref */
