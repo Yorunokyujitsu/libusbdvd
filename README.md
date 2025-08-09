@@ -3,12 +3,13 @@
 libusbdvd is a c++ library for HorizonOS supporting CD/DVD Drives.
 
 Current support:
+ - USB-DVD Drives with USB MASS STORAGE SUBCLASS 0x02
+ - File Image mount (.iso)
  - CD Audio
  - ISO9660 with Joliet and RockRidge support
  
  
-*It support USB MASS STORAGE SUBCLASS 0x02 devices
-
+ 
 TODO List:
 - UDF Filesystem support
 - DECSS Algo
@@ -32,6 +33,16 @@ C++ Example
     /* destroy and cleanup */
     delete dvdtest;
 
+For image file load you can use
+
+C
+ 
+	usbdvd_obj* dvdtest = usbdvd_initimage("/pathtoimagefile");
+
+C++
+
+	CUSBDVD *dvdtest= new CUSBDVD("/pathtoimagefile");
+	
 
 
 
