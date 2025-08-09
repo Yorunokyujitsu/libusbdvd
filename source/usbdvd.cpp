@@ -185,15 +185,14 @@ CUSBDVD::CUSBDVD(){
 					cdfs_init = true;
 
 				
-				SWITCH_CDAUDIODEVOPTAB = new SWITCH_AUDIOCDFS(CDAUDIOFS,"acd0","acd0:");
-				pseudofs_init = true;
-				strcpy(usbdvd_drive_ctx.fs.mountpoint,"acd0:");
-				strcpy(usbdvd_drive_ctx.fs.disc_fstype,"CD Audio");
-				strcpy(usbdvd_drive_ctx.fs.volid,"CD Audio");
-				
+					SWITCH_CDAUDIODEVOPTAB = new SWITCH_AUDIOCDFS(CDAUDIOFS,"acd0","acd0:");
+					pseudofs_init = true;
+					strncpy(usbdvd_drive_ctx.fs.mountpoint,"acd0:",sizeof(usbdvd_drive_ctx.fs.mountpoint)-1);
+					strncpy(usbdvd_drive_ctx.fs.disc_fstype,"CD Audio",sizeof(usbdvd_drive_ctx.fs.disc_fstype)-1);
+					strncpy(usbdvd_drive_ctx.fs.volid,"CD Audio",sizeof(usbdvd_drive_ctx.fs.volid)-1);
+					usbdvd_drive_ctx.fs.mounted = true;
 				}
-				
-				if(pseudofs_init && cdfs_init && usb_init)usbdvd_drive_ctx.fs.mounted = true;
+			
 			}else if(myfstype == 2){
 				uint32_t mylba = ((toc.tracks[0].MIN*60)+toc.tracks[0].SEC)*75+toc.tracks[0].FRAME;
 				uint32_t nextlba = ((toc.tracks[1].MIN*60)+toc.tracks[1].SEC)*75+toc.tracks[1].FRAME;

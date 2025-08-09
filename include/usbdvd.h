@@ -8,7 +8,7 @@ extern "C" {
 
 #define LIBUSBDVD_VERSION_MAJOR    0
 #define LIBUSBDVD_VERSION_MINOR    0
-#define LIBUSBDVD_VERSION_MICRO    1
+#define LIBUSBDVD_VERSION_MICRO    2
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY(x)
@@ -23,7 +23,7 @@ extern "C" {
 typedef struct{
 	bool mounted;
 	char disc_fstype[0x80];
-	char mountpoint[0x05];
+	char mountpoint[0x10];
 	char volid[0xff];
 }usbdvd_fs_struct;
 
