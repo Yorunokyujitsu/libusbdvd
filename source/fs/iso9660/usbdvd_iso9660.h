@@ -16,7 +16,7 @@ public:
     CUSBDVD_ISO9660FS(std::string _filename);
 	CUSBDVD_ISO9660FS(CUSBSCSI * _usb_scsi_ctx,uint32_t _startlba,uint32_t _endlba);
 	
-    void list_dir_iso9660(uint32_t sector, const std::string& path);
+    void list_dir_iso9660(uint32_t sector, const std::string path);
     void list_dir_joliet(uint32_t sector, const std::string& path);
 	uint32_t GetFileSize(std::string _filename);
   

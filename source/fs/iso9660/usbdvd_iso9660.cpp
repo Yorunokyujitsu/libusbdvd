@@ -1,5 +1,6 @@
 #include "usbdvd_iso9660.h"
 #include "usbdvd_utils.h"
+#include <time.h>
 
 #define DATA_SECOTR_SIZE 2048
 
@@ -106,6 +107,68 @@ typedef struct{
     uint8_t tf : 1;
 }__attribute__((__packed__)) rockridge_rr_flags_struct;
 
+
+
+typedef struct{
+	uint16_t sig;
+	uint8_t len;
+	uint8_t sue_ver;
+	struct{
+		uint8_t st_mode_le[4];
+		uint8_t st_mode_be[4];
+	};
+	struct{
+		uint8_t st_nlink_le[4];
+		uint8_t st_nlink_be[4];
+	};
+	struct{
+		uint8_t st_uid_le[4];
+		uint8_t st_uid_be[4];
+	};
+	struct{
+		uint8_t st_gid_le[4];
+		uint8_t st_gid_be[4];
+	};
+	struct{
+		uint8_t st_ino_le[4];
+		uint8_t st_ino_be[4];
+	};
+	
+}__attribute__((__packed__)) rockridge_px_struct;
+
+
+typedef struct {
+	uint8_t create : 1;
+    uint8_t modify : 1;
+    uint8_t access : 1;
+    uint8_t attrib : 1;
+    uint8_t backup : 1;
+    uint8_t exp : 1;
+    uint8_t effective : 1;
+    uint8_t long_form : 1;
+	
+}__attribute__((__packed__)) rockridge_tf_flags_struct;
+
+
+typedef struct{
+	uint16_t sig;
+	uint8_t len;
+	uint8_t sue_ver;
+	union{
+		rockridge_tf_flags_struct flags;
+		uint8_t flags_byte;
+	};
+}__attribute__((__packed__)) rockridge_tf_struct;
+
+typedef struct{
+	uint8_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+	uint8_t gmtoff;
+}__attribute__((__packed__)) rockridge_tf_timeformat_struct;
 
 
 std::string cleanFileName(const uint8_t* name, uint8_t length) {
@@ -288,8 +351,29 @@ CUSBDVD_ISO9660FS::CUSBDVD_ISO9660FS(std::string _filename) : CUSBDVD_DATADISC(_
 	
 }
 
+int count_timestamps(uint8_t flags) {
+    int count = 0;
+    uint8_t mask = flags & 0x7F;  
+    while (mask) {
+        if (mask & 1) count++;
+        mask >>= 1;
+    }
+    return count;
+}
 
-void CUSBDVD_ISO9660FS::list_dir_iso9660(uint32_t sector, const std::string& path = "/"){
+time_t convert_rockridge_tf_to_unix_timestamp_local(const rockridge_tf_timeformat_struct* rr_time) {
+    struct tm t;
+	t.tm_year = rr_time->year;
+    t.tm_mon = rr_time->month - 1;
+    t.tm_mday = rr_time->day;
+    t.tm_hour = rr_time->hour;
+    t.tm_min = rr_time->minute;
+    t.tm_sec = rr_time->second;
+    t.tm_isdst = -1; 
+    return mktime(&t);
+}
+
+void CUSBDVD_ISO9660FS::list_dir_iso9660(uint32_t sector, const std::string path = "/"){
     uint8_t buffer[2048];
     ReadSector(sector,buffer);
     size_t offset = 0;
@@ -315,40 +399,94 @@ void CUSBDVD_ISO9660FS::list_dir_iso9660(uint32_t sector, const std::string& pat
                 const uint8_t* rr_ptr = name_ptr+record->name_length+mypadding;
                 rockridge_header_struct test_rr;
                 memcpy(&test_rr,rr_ptr,sizeof(test_rr));
+				
                 if(test_rr.sp_id[0] == 'R' && test_rr.sp_id[1] == 'R'){
 					isrockridge = true;
                     rockridge_rr_flags_struct rockridge_rr_flags;
                     memcpy(&rockridge_rr_flags,&rr_ptr[5],1);
-                    if(rockridge_rr_flags.nm){
-                        
-                        const uint8_t* nm_ptr = rr_ptr+test_rr.len;
-                        rockridge_header_struct test_nm;
-                        memcpy(&test_nm,nm_ptr,4);
-                        uint8_t testname[test_nm.len-4];
-                        memset(testname,0,test_nm.len-4);
-                        memcpy(testname,&nm_ptr[5],test_nm.len-5);
-                        filename = (const char *)testname;
-                        std::string full_path_rr = path;
-                        if (path != "/") full_path_rr += "/";
-                        full_path_rr+=filename;
-                        disc_dirlist_struct tmp;
-                        
-                        tmp.name = (const char *)testname;
-                        tmp.size =  byte2u32_le(record->root_size_le);
-                        tmp.lba = byte2u32_le(record->root_lba_le);
-                        tmp.fullpath = full_path_rr;
-                        tmp.isdir = is_directory;
-                        if(tmp.isdir && filename == ""){
-                           
-                        }else{
-                            disc_dirlist.push_back(tmp);
-                        }
-                        
-                        if (is_directory && filename != "" && byte2u32_le(record->root_lba_le) > 0) {
-							list_dir_iso9660(byte2u32_le(record->root_lba_le), full_path_rr);
+					disc_dirlist_struct tmp;
+					
+					uint8_t * rr_loop_ptr = (uint8_t *)rr_ptr+test_rr.len;
+					uint32_t rr_offset = 0;
+					
+					while(rr_offset < record->rd_len){
+						rockridge_header_struct test_head;
+						memcpy(&test_head,rr_loop_ptr+rr_offset,4);
+						
+						
+						if(test_head.sp_id[0] == 'T' && test_head.sp_id[1] == 'F'){
+							rockridge_tf_struct tfdata = {0};
+							memcpy(&tfdata,rr_loop_ptr+rr_offset,sizeof(rockridge_tf_struct));
+							int timestamp_count = count_timestamps(tfdata.flags_byte);
+							bool long_form = (tfdata.flags_byte & 0x80) != 0;
+							int timestamp_size = long_form ? 17 : 7;
+							uint8_t *timestamps = rr_loop_ptr+rr_offset;
+							for (int i = 0; i < timestamp_count; i++) {
+								uint8_t *current_timestamp = timestamps + 5 + (i * timestamp_size);
+								if (tfdata.flags_byte & 0x01 && i == 0) {
+									
+									rockridge_tf_timeformat_struct tf_timeformat = {0};
+									memcpy(&tf_timeformat,current_timestamp,sizeof(rockridge_tf_timeformat_struct));
+									time_t mytime = convert_rockridge_tf_to_unix_timestamp_local(&tf_timeformat);
+									tmp.attribute_time = mytime;
+								}else if (tfdata.flags_byte & 0x02) {
+									
+									rockridge_tf_timeformat_struct tf_timeformat = {0};
+									memcpy(&tf_timeformat,current_timestamp,sizeof(rockridge_tf_timeformat_struct));
+									time_t mytime = convert_rockridge_tf_to_unix_timestamp_local(&tf_timeformat);
+									tmp.modification_time = mytime;
+									
+								}	else if (tfdata.flags_byte & 0x03) {
+									
+									rockridge_tf_timeformat_struct tf_timeformat = {0};
+									memcpy(&tf_timeformat,current_timestamp,sizeof(rockridge_tf_timeformat_struct));
+									time_t mytime = convert_rockridge_tf_to_unix_timestamp_local(&tf_timeformat);
+									tmp.access_time = mytime;
+									
+								}								
+							}
+							
+							
+						} else if(test_head.sp_id[0] == 'P' && test_head.sp_id[1] == 'X'){
+							
+							rockridge_px_struct pxdata = {0};
+							memcpy(&pxdata,rr_loop_ptr+rr_offset,sizeof(rockridge_px_struct));
+							tmp.st_mode = byte2u32_le(pxdata.st_mode_le);
+							tmp.st_nlink = byte2u32_le(pxdata.st_nlink_le);
+							tmp.st_gid = byte2u32_le(pxdata.st_gid_le);
+							tmp.st_uid = byte2u32_le(pxdata.st_uid_le);
+							tmp.st_ino = byte2u32_le(pxdata.st_ino_le);
+							
+						} else if(test_head.sp_id[0] == 'N' && test_head.sp_id[1] == 'M'){
+							uint8_t testname[test_head.len-4];
+							memset(testname,0,test_head.len-4);
+							memcpy(testname,&rr_loop_ptr[5],test_head.len-5);
+							filename = (const char *)testname;
+							std::string full_path_rr = path;
+							if (path != "/") full_path_rr += "/";
+							full_path_rr+=filename;
+							
+							tmp.name = (const char *)testname;
+							tmp.size =  byte2u32_le(record->root_size_le);
+							tmp.lba = byte2u32_le(record->root_lba_le);
+							tmp.fullpath = full_path_rr;
+							tmp.isdir = is_directory;
+							
+						}else{
+							break;
 						}
-                        
-                    }
+						rr_offset+=test_head.len;
+						
+					}
+					if(tmp.isdir && filename == ""){
+                           
+					}else{
+						disc_dirlist.push_back(tmp);
+					}
+					if (is_directory && filename != "" && byte2u32_le(record->root_lba_le) > 0) {
+						list_dir_iso9660(byte2u32_le(record->root_lba_le), tmp.fullpath);
+					}
+					
                 }else{
                     disc_dirlist_struct tmp;
                     tmp.name = filename;

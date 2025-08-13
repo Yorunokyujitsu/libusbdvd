@@ -17,15 +17,19 @@ typedef struct{
     uint32_t size;
     uint32_t lba;
 	time_t time = 0;	// ISO9660
-	time_t access_time = 0;	// UDF
-	time_t modification_time = 0;	// UDF
-	time_t attribute_time = 0;	// UDF
+	time_t access_time = 0;	// UDF or RockRidge
+	time_t modification_time = 0;	// UDF or RockRidge
+	time_t attribute_time = 0;	// UDF or RockRidge
 	uint32_t partlocation = 0; // UDF 
+	uint32_t st_mode = 0;	// RockRidge
+	uint32_t st_nlink = 0;	// RockRidge
+	uint32_t st_uid = 0;	// RockRidge
+	uint32_t st_gid = 0;	// RockRidge
+	uint32_t st_ino = 0;	// RockRidge
+	
     std::string fullpath;
 	
 }disc_dirlist_struct;
-
- 
 
 class CUSBDVD_DATADISC{
 public:

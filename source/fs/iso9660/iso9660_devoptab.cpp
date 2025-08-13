@@ -1,7 +1,7 @@
 #include "iso9660_devoptab.h"
 #include <filesystem>
 
-void iso9660fsstat_entry(disc_dirlist_struct *_filedesc, struct stat *st);
+void iso9660fsstat_entry(disc_dirlist_struct *_filedesc, struct stat *st,bool rockridge);
 
 SWITCH_ISO9660FS::SWITCH_ISO9660FS(CUSBDVD_ISO9660FS *_ctx,std::string _name,std::string _mount_name){
 
@@ -132,7 +132,7 @@ int       SWITCH_ISO9660FS::iso9660fs_fstat    (struct _reent *r, void *fd, stru
     auto lk = std::scoped_lock(priv->session_mutex);
 	
 	disc_dirlist_struct * _filedesc = priv->ISO9660FS->GetFileDescFromIDX(priv_file->filelist_id);
-	iso9660fsstat_entry(_filedesc,st);
+	iso9660fsstat_entry(_filedesc,st,priv->ISO9660FS->isrockridge);
 	
 	return 0;
 }
@@ -144,7 +144,7 @@ int       SWITCH_ISO9660FS::iso9660fs_stat     (struct _reent *r, const char *fi
 	disc_dirlist_struct myfiledesc;
 	int ret = priv->ISO9660FS->GetFileDesc(&file[5],myfiledesc);
 	
-	iso9660fsstat_entry(&myfiledesc,st);
+	iso9660fsstat_entry(&myfiledesc,st,priv->ISO9660FS->isrockridge);
 	return ret;
 
 }
@@ -191,7 +191,7 @@ int       SWITCH_ISO9660FS::iso9660fs_dirnext  (struct _reent *r, DIR_ITER *dirS
 	memset(filename, 0, NAME_MAX);
 	
 	memcpy(filename,priv->currdirlist[priv_dir->dirnext_idx].name.c_str(),255);
-	iso9660fsstat_entry(&priv->currdirlist[priv_dir->dirnext_idx],filestat);
+	iso9660fsstat_entry(&priv->currdirlist[priv_dir->dirnext_idx],filestat,priv->ISO9660FS->isrockridge);
 	
 	priv_dir->dirnext_idx +=1;
 	
@@ -214,17 +214,28 @@ int       SWITCH_ISO9660FS::iso9660fs_statvfs  (struct _reent *r, const char *pa
 	return 0;
 }
 
-void iso9660fsstat_entry(disc_dirlist_struct *_filedesc, struct stat *st)
+void iso9660fsstat_entry(disc_dirlist_struct *_filedesc, struct stat *st,bool rockridge)
 {
 	*st = {};
+	if(rockridge){
+		st->st_mode =  _filedesc->st_mode;
+		st->st_nlink =  _filedesc->st_nlink;
+		st->st_uid =  _filedesc->st_uid;
+		st->st_gid =  _filedesc->st_gid;
+		st->st_size = _filedesc->size;
+		st->st_atime = _filedesc->access_time;
+		st->st_mtime = _filedesc->modification_time;
+		st->st_ctime = _filedesc->attribute_time;
+	}else{
+		st->st_mode =  _filedesc->isdir ? S_IFDIR : S_IFREG;
+		st->st_nlink = 1;
+		st->st_uid = 1;
+		st->st_gid = 2;
+		st->st_size = _filedesc->size;
+		st->st_atime = _filedesc->time;
+		st->st_mtime = _filedesc->time;
+		st->st_ctime = _filedesc->time;
+	}
 	
-	st->st_mode =  _filedesc->isdir ? S_IFDIR : S_IFREG;
-	st->st_nlink = 1;
-	st->st_uid = 1;
-	st->st_gid = 2;
-	st->st_size = _filedesc->size;
-	st->st_atime = _filedesc->time;
-	st->st_mtime = _filedesc->time;
-	st->st_ctime = _filedesc->time;
 	
 }
