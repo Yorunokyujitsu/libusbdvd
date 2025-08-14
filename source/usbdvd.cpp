@@ -189,10 +189,12 @@ CUSBDVD::CUSBDVD(){
 						break;
 					case ATAPI_PROFILE_BD_ROM:
 						disctype = "BD-ROM";
+						isbluray = true;
 						break;
 					case ATAPI_PROFILE_BD_R_SEQUENTIAL:
 					case ATAPI_PROFILE_BD_R_RANDOM:
 						disctype = "BD-R";
+						isbluray = true;
 						break;
 					case ATAPI_PROFILE_BD_R_DL_SEQUENTIAL:
 					case ATAPI_PROFILE_BD_R_DL_JUMP_RECORDING:
@@ -209,9 +211,8 @@ CUSBDVD::CUSBDVD(){
 			
 			disccapacity_struct testsize;
 			USB_SCSI->UsbDvdGetCapacity(0,(uint8_t *)&testsize);
-			
+			usbdvd_drive_ctx.disc_size = byte2u32_be(testsize.size)*byte2u32_be(testsize.blocksize);
 			strncpy(usbdvd_drive_ctx.disc_type,disctype.c_str(),sizeof(usbdvd_drive_ctx.disc_type)-1);
-			
 			USB_SCSI->UsbDvdPreventMediumRemoval(0,1);
 			
 			if(iscdrom){

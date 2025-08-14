@@ -19,6 +19,7 @@ extern "C" {
     TOSTRING(LIBUSBDVD_VERSION_MICRO)
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct{
 	bool mounted;
@@ -37,6 +38,7 @@ typedef struct{
     char product_revision[0x4+1];
     char serial_number[0x8+1];
 	char disc_type[0x20];
+	uint64_t disc_size;
 	usbdvd_fs_struct fs;
 }usbdvd_drive_struct;
 
