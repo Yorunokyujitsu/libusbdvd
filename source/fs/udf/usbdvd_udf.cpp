@@ -375,6 +375,65 @@ void CUSBDVD_UDFFS::Parse_FID_Ptr(uint8_t * buffer,std::string _path){
 	
 }
 
+CUSBDVD_UDFFS::CUSBDVD_UDFFS(std::string _filename) 
+	: CUSBDVD_DATADISC(_filename){
+	
+	
+	uint8_t udf_anchorvd[DATA_SECOTR_SIZE];
+    
+    ReadSector(256,udf_anchorvd);
+	UDF_AnchorVolumeDescriptorPointer avdp = {0};
+    memcpy(&avdp,udf_anchorvd,sizeof(avdp));
+	
+	
+	
+	printf(CONSOLE_ESC(13;2H));
+
+	uint8_t udf_pvd[DATA_SECOTR_SIZE];
+	uint8_t udf_pvd_2[DATA_SECOTR_SIZE];
+	uint8_t udf_partdesc[DATA_SECOTR_SIZE];
+	uint8_t udf_lvd[DATA_SECOTR_SIZE];
+    
+    ReadSector(avdp.main_vds_extent.location,udf_pvd);
+	ReadSector(avdp.main_vds_extent.location+1,udf_pvd_2);
+	ReadSector(avdp.main_vds_extent.location+2,udf_partdesc);
+	ReadSector(avdp.main_vds_extent.location+3,udf_lvd);
+	
+	
+	UDF_PrimaryVolumeDescriptor pvd = {0};
+	partition_descriptor_t partdesc = {0};
+	memcpy(&pvd,udf_pvd,sizeof(pvd));
+	
+	
+	
+	memcpy(&partdesc,udf_partdesc,sizeof(partdesc));
+	
+    logical_volume_descriptor_t testlvd = {0};
+	memcpy(&testlvd,udf_lvd,sizeof(logical_volume_descriptor_t));
+	
+	uint16_t udfver = (testlvd.domain_identifier.identifier_suffix[1] << 8 ) |  testlvd.domain_identifier.identifier_suffix[0];
+	
+	udf_version_string = getUDFVersionString(udfver);
+	
+	
+	
+	
+	if(udfver> 0x0102){
+		return;
+	}
+	
+	
+	uint32_t partlbalocation = partdesc.partition_starting_location+testlvd.logical_volume_contents_use.location;
+	partitionlba = partlbalocation;
+	uint8_t udf_file_set_descriptor[DATA_SECOTR_SIZE];
+	ReadSector(partlbalocation,udf_file_set_descriptor);
+	udf_fsd_s fsd = {0};
+	memcpy(&fsd,udf_file_set_descriptor,sizeof(fsd));
+	uint8_t root_fid[DATA_SECOTR_SIZE];
+	ReadSector(partlbalocation+fsd.root_icb.location+1,root_fid);
+	Parse_FID_Ptr(root_fid,"/");
+}
+
 CUSBDVD_UDFFS::CUSBDVD_UDFFS(CUSBSCSI * _usb_scsi_ctx,uint32_t _startlba,uint32_t _endlba) 
 	: CUSBDVD_DATADISC(_usb_scsi_ctx,_startlba,_endlba){
 	

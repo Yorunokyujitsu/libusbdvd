@@ -254,47 +254,47 @@ CUSBDVD_ISO9660FS::CUSBDVD_ISO9660FS(CUSBSCSI * _usb_scsi_ctx,uint32_t _startlba
     memcpy(&primary_vd,iso9660_rootsector,sizeof(primary_vd));
  
     
-		SystemIdentifier = (const char *)primary_vd.sys_id;
-		VolumeIdentifier = (const char *)primary_vd.vol_id;
-		VolumeSpace = byte2u32_le(primary_vd.vd_space_le)*DATA_SECOTR_SIZE;
-		VolumeSectors =  byte2u32_le(primary_vd.vd_space_le);
-		rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&primary_vd.rd_record);
-		uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
+	SystemIdentifier = (const char *)primary_vd.sys_id;
+	VolumeIdentifier = (const char *)primary_vd.vol_id;
+	VolumeSpace = byte2u32_le(primary_vd.vd_space_le)*DATA_SECOTR_SIZE;
+	VolumeSectors =  byte2u32_le(primary_vd.vd_space_le);
+	rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&primary_vd.rd_record);
+	uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
 		
-		uint8_t iso9660_rootjolietsector[DATA_SECOTR_SIZE];
+	uint8_t iso9660_rootjolietsector[DATA_SECOTR_SIZE];
 	   
-		ReadSector(17,iso9660_rootjolietsector);
-		primary_vd_struct testjoilet = {0};
-		memcpy(&testjoilet,iso9660_rootjolietsector,sizeof(testjoilet));
+	ReadSector(17,iso9660_rootjolietsector);
+	primary_vd_struct testjoilet = {0};
+	memcpy(&testjoilet,iso9660_rootjolietsector,sizeof(testjoilet));
 		
-		if(testjoilet.vdtype == 0x02){
-			isjoliet = true;
-			if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x40){
-				jolietver = 1;
+	if(testjoilet.vdtype == 0x02){
+		isjoliet = true;
+		if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x40){
+			jolietver = 1;
 				
-			}
-			if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x43){
-				jolietver = 2;
-				
-			}
-			if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x45){
-				jolietver = 3;
-			}
-			
 		}
+		if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x43){
+			jolietver = 2;
+				
+		}
+		if(testjoilet.joliet_escapeseq_type[0] == 0x25 && testjoilet.joliet_escapeseq_type[1] == 0x2f && testjoilet.joliet_escapeseq_type[2] == 0x45){
+			jolietver = 3;
+		}
+			
+	}
 
-	   if(isjoliet){
-			rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&testjoilet.rd_record);
-			uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
+	if(isjoliet){
+	rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&testjoilet.rd_record);
+	uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
 			
-		   list_dir_joliet(root_sector,"/");
-	   }else{
-			list_dir_iso9660(root_sector,"/");
-		}
+		list_dir_joliet(root_sector,"/");
+	}else{
+		list_dir_iso9660(root_sector,"/");
+	}
 		
-		for(int i=0;i<(int)disc_dirlist.size();i++){
-			usbdvd_log("%s\r\n",disc_dirlist[i].name.c_str());
-		}
+	for(int i=0;i<(int)disc_dirlist.size();i++){
+		usbdvd_log("%s\r\n",disc_dirlist[i].name.c_str());
+	}
 	
 }
 
@@ -307,18 +307,18 @@ CUSBDVD_ISO9660FS::CUSBDVD_ISO9660FS(std::string _filename) : CUSBDVD_DATADISC(_
     memcpy(&primary_vd,iso9660_rootsector,sizeof(primary_vd));
     
     
-		SystemIdentifier = (const char *)primary_vd.sys_id;
-		VolumeIdentifier = (const char *)primary_vd.vol_id;
-		VolumeSpace = byte2u32_le(primary_vd.vd_space_le)*DATA_SECOTR_SIZE;
-		VolumeSectors =  byte2u32_le(primary_vd.vd_space_le);
-		rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&primary_vd.rd_record);
-		uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
+	SystemIdentifier = (const char *)primary_vd.sys_id;
+	VolumeIdentifier = (const char *)primary_vd.vol_id;
+	VolumeSpace = byte2u32_le(primary_vd.vd_space_le)*DATA_SECOTR_SIZE;
+	VolumeSectors =  byte2u32_le(primary_vd.vd_space_le);
+	rd_record_struct* root_record = reinterpret_cast<rd_record_struct*>(&primary_vd.rd_record);
+	uint32_t root_sector = byte2u32_le(root_record->root_lba_le);
 		
-		uint8_t iso9660_rootjolietsector[DATA_SECOTR_SIZE];
+	uint8_t iso9660_rootjolietsector[DATA_SECOTR_SIZE];
 	   
-		ReadSector(17,iso9660_rootjolietsector);
-		primary_vd_struct testjoilet = {0};
-		memcpy(&testjoilet,iso9660_rootjolietsector,sizeof(testjoilet));
+	ReadSector(17,iso9660_rootjolietsector);
+	primary_vd_struct testjoilet = {0};
+	memcpy(&testjoilet,iso9660_rootjolietsector,sizeof(testjoilet));
 		
 		if(testjoilet.vdtype == 0x02){
 			isjoliet = true;

@@ -26,9 +26,8 @@ CUSBDVD_DATADISC::CUSBDVD_DATADISC(std::string _filename){
         usbdvd_log("\n mutex init has failed\n");
         return;
     }
-    
-    
-    filename = _filename;
+	
+	filename = _filename;
     isofp = fopen(filename.c_str(),"rb");
     isofile = true;
     
