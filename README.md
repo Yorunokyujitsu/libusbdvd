@@ -4,16 +4,17 @@ libusbdvd is a c++ library for HorizonOS supporting CD/DVD Drives.
 
 Current support:
  - USB-DVD Drives with USB MASS STORAGE SUBCLASS 0x02
- - File Image mount (.iso)
+ - File Image mount (.iso) (.cue/.bin)
  - CD Audio
  - ISO9660 with Joliet and basic RockRidge support
  - Basic UDF 1.02 Support
+ - Limited Blu-ray support
  
  
 TODO List:
 - Full UDF Filesystem support
-- DECSS Algo
-- Blu-ray support 
+- CSS Algo (for Commercial DVD)
+- AACS Algo (for Commerical BD)
 
 For a list of tested device refer to [Compatibility List](https://github.com/proconsule/libusbdvd/blob/master/COMPAT.md)
 
