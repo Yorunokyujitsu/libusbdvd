@@ -95,6 +95,8 @@ int main(int argc, const char* const* argv) {
 	usbdvd_obj* test = usbdvd_init();
 	// For ISO file mount use
 	// usbdvd_obj* test = usbdvd_initimage("/pathtoiso.iso");
+	// For CUE/BIN mount use
+	//usbdvd_obj* test = usbdvd_initcuebin("/pathtofile.cue","/pathtofile.bin");
 	
 	// Retrive the drive struct ref
 	usbdvd_drive_struct *drivectx = usbdvd_get_drivectx(test);
